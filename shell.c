@@ -3,7 +3,6 @@
 #include "interface/common.h"
 #include "lib/lib.h"
 
-#include <limits.h>
 #include <unistd.h>
 #include <time.h>
 #include <unistd.h>
@@ -13,51 +12,67 @@ static sig_atomic_t flag;
 
 int main()
 {
-    cmd_t cmd;
     flag = 0;
     // capture SIGKINT
     signal(SIGINT, control_key_handler);
+    cmd_t cmd;
+    char user_input[500] = {};
     while (1)
     {
 
-        char user_input[ARG_MAX] = {};
-        if (ask_user_input(user_input) != 0)
+        // int p_err = ask_user_input(user_input);
+
+        // if (p_err == -1 || p_err == 0)
+        //     continue;
+
+        if (ask_user_input(user_input) > 0)
         {
             parse_command(user_input, &cmd);
 
-            pid_t pid = fork();
-
-            if (pid == 0)
+            // command builtin
+            if (strcmp(cmd.argv[0], "exit") == 0)
             {
-                printf("id: %d, child\n", pid);
-                // system(*cmd.argv);
-                execvp(*cmd.argv, cmd.argv); // (first index value of the string array, array)
-
-                perror("program exit with error");
                 exit(EXIT_SUCCESS);
             }
-            if (pid > 0)
+
+            if (strcmp(cmd.argv[0], "cd") == 0)
             {
-                printf("id: %d, parent\n", pid);
-                int status;
-                waitpid(pid, &status, 0);
 
-                if (WIFEXITED(status)) // wait until child send SIGCHLD
+                int err = chdir(cmd.argv[1]);
+
+                if (err != 0)
                 {
+                    fprintf(stderr, "erreur : can't change directory ");
+                }
+            }
 
-                    printf("Foreground job exited with code %d\n", status);
+            else
+            {
+                pid_t pid = fork();
+
+                if (pid == 0)
+                {
+                    // printf("id: %d, child\n", pid);
+                    if (execvp(cmd.argv[0], cmd.argv) < 0) // (first index value of the string array, array
+                    {
+                        fprintf(stderr, "erreur d'execution de commande");
+                        exit(EXIT_FAILURE);
+                    }
+                }
+
+                else
+                {
+                    int child_status;
+                    // printf("id: %d, parent\n", pid);
+                    waitpid(pid, &child_status, 0);
+                    if (WIFEXITED(child_status)) // wait until child send SIGCHLD
+                    {
+                        printf("Foreground job exited with code %d\n", WEXITSTATUS(child_status));
+                    }
                 }
             }
         }
+        dispose_command(&cmd); // free
     }
-    dispose_command(&cmd); // free
     exit(EXIT_SUCCESS);
 }
-
-// double time_spent = 0.0;
-// clock_t begin = clock();
-
-//     clock_t end = clock();
-//     time_spent += (double)(end - begin) / CLOCKS_PER_SEC;
-
-//     printf("..............................................................................................................took %fs\n", time_spent);

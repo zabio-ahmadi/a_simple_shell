@@ -147,6 +147,10 @@ class Test:
                               capture_output=True, encoding='utf-8')
 
         # check standard output
+        # print("===============================")
+        # print(real)
+        # print(std_stdout)
+        # print("===============================")
         if not real.stderr in std_stderr:
             raise AssertionError('The standard output of the command "{}" does not include the following correct result:\n{}\cmd result in shell:\n{}'.format(
                 ' '.join(cmd), real.stderr, std_stderr))

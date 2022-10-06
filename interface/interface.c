@@ -130,9 +130,20 @@ int ask_user_input(char *user_input)
   // printf(PROMPT);
   // printInColor(cyan, " ~: [🦄]");
   // printInColor(cyan, "[ ⚡ ]");
-  printInColor(cyan, " ~ [🌛]");
+  // printInColor(cyan, " ~ [🌛]");
   // printInColor(cyan, " ~ [🎄]");
-  // printInColor(cyan, " ~ [🐬]");
+
+  char directory[ARG_MAX];
+
+  if (getcwd(directory, ARG_MAX) != NULL)
+  {
+    printInColor(green, directory);
+    printInColor(cyan, " [🐬]");
+  }
+  else
+  {
+    printInColor(cyan, " [🐬]");
+  }
 
   printInColor(white, " ");
   if (fgets(user_input, ARG_MAX, stdin) == NULL)

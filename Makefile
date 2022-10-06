@@ -26,4 +26,4 @@ clean:
 
 rebuild: 
 	$(MAKE) clean 
-	$(MAKE) shell
+	$(MAKE) gsh

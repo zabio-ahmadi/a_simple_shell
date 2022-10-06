@@ -1,6 +1,8 @@
 #ifndef _INTERFACE_H
 #define _INTERFACE_H
 #include <stdbool.h>
+#include <unistd.h>
+#include <stdio.h>
 
 #define ARG_MAX 1024 // maximum line length in the terminal
 
