@@ -15,6 +15,7 @@ import time
 import psutil
 import re
 
+
 def print_usage():
     print("Usage: {} shell_executable_name".format(sys.argv[0]))
     print("")
@@ -40,7 +41,6 @@ class Test:
     def __init__(self, shell_exec: str) -> None:
         self.shell_exec = Path(shell_exec).resolve()
 
-
     def _get_exit_code_from_stdout(self, stdout: str) -> int:
         # Find line with keyword "code"
         for line in stdout.splitlines():
@@ -49,8 +49,7 @@ class Test:
                 return int(''.join([c for c in line.split('code')[-1] if c.isdigit()]))
         raise AssertionError('No exit code found')
 
-
-    def _execute_shell_command(self, command: list[str], cwd: str = tempfile.gettempdir(), duration_cmd: float = 0.2, timeout: int = 3):
+    def _execute_shell_command(self, command, cwd: str = tempfile.gettempdir(), duration_cmd: float = 0.2, timeout: int = 3):
         """ Execute a shell command and tries to determine if the command is correctly executed
         """
 
@@ -68,35 +67,38 @@ class Test:
             shell_process.stdin.write(str_cmd + '\n')
             shell_process.stdin.flush()
 
-            #TODO: we wait a bit here to ensure the child is created ? However it seems is it not needed, how to ensure it ?
+            # TODO: we wait a bit here to ensure the child is created ? However it seems is it not needed, how to ensure it ?
             time.sleep(0.1)
 
             # Wait for children to die and check if some are zombies
             # TODO: it can happen that the child is stuck (e.g. if it becomes a shell cause cannot execve) in that case the code bellow blocks
             children = shell_ps.children()
-            while(children):
+            while (children):
                 for c in children:
                     if c.status() == psutil.STATUS_ZOMBIE:
-                        raise AssertionError('The shell child process {} is a zombie for command "{}"'.format(c, str_cmd))
+                        raise AssertionError(
+                            'The shell child process {} is a zombie for command "{}"'.format(c, str_cmd))
                 time.sleep(0.1)
                 children = shell_ps.children()
-
 
             # Check if command process has become a child of process 1 (e.g. by double fork)
             init_ps = psutil.Process(1)
             for c in init_ps.children():
                 if c.cmdline() == command:
-                    raise AssertionError('The command "{}" seem to be a child of process 1'.format(str_cmd))
+                    raise AssertionError(
+                        'The command "{}" seem to be a child of process 1'.format(str_cmd))
 
             # update current working directory
             cwd = shell_ps.cwd()
 
             # Terminate shell by using exit command and returning shell outputs
-            stdout, stderr = shell_process.communicate(input='exit\n', timeout=timeout)
+            stdout, stderr = shell_process.communicate(
+                input='exit\n', timeout=timeout)
 
             # Test if shell is still running
             if shell_ps.is_running():
-                raise AssertionError('Shell is still running after en of communication, either exit is not working or the shell does not terminate on Ctrl+D')
+                raise AssertionError(
+                    'Shell is still running after en of communication, either exit is not working or the shell does not terminate on Ctrl+D')
 
             return stdout, stderr, cwd
 
@@ -110,7 +112,6 @@ class Test:
         # sleep is one of the given exemples
         self._execute_shell_command(['sleep', '1'], timeout=5)
 
-
     @test
     def test_successfull_foregroundjob(self):
         # check if command output (stdout, stderr and 0 exit status) is the one expected with ls command
@@ -118,40 +119,45 @@ class Test:
         std_stdout, std_stderr, _ = self._execute_shell_command(cmd)
 
         # get "real" output
-        real = subprocess.run(cmd, cwd=tempfile.gettempdir(), capture_output=True, encoding='utf-8')
+        real = subprocess.run(cmd, cwd=tempfile.gettempdir(),
+                              capture_output=True, encoding='utf-8')
 
         # check standard output
         if not real.stdout in std_stdout:
-            raise AssertionError('The standard output of the command "{}" does not include the following correct result:\n{}\cmd result in shell:\n{}'.format(' '.join(cmd), real.stdout, std_stdout))
+            raise AssertionError('The standard output of the command "{}" does not include the following correct result:\n{}\cmd result in shell:\n{}'.format(
+                ' '.join(cmd), real.stdout, std_stdout))
 
         # check standard error
         if std_stderr:
-            raise AssertionError('The standard error of the command "{}" shouldbe empty but contains:\n{}'.format(std_stderr))
+            raise AssertionError(
+                'The standard error of the command "{}" shouldbe empty but contains:\n{}'.format(std_stderr))
 
         # check return code
         std_returncode = self._get_exit_code_from_stdout(std_stdout)
         if std_returncode != real.returncode:
-            raise AssertionError('The command "{}" should return {} but the shell indicates {}'.format(' '.join(cmd), real.returncode, std_returncode))
+            raise AssertionError('The command "{}" should return {} but the shell indicates {}'.format(
+                ' '.join(cmd), real.returncode, std_returncode))
 
-
-    def test_error_foregroundjob(self, cmd: list[str]):
+    def test_error_foregroundjob(self, cmd):
         # check if command output (stdout, stderr and 0 exit status) is the one expected with ls command
         std_stdout, std_stderr, _ = self._execute_shell_command(cmd)
 
         # get "real" output
-        real = subprocess.run(cmd, cwd=tempfile.gettempdir(), capture_output=True, encoding='utf-8')
+        real = subprocess.run(cmd, cwd=tempfile.gettempdir(),
+                              capture_output=True, encoding='utf-8')
 
         # check standard output
         if not real.stderr in std_stderr:
-            raise AssertionError('The standard output of the command "{}" does not include the following correct result:\n{}\cmd result in shell:\n{}'.format(' '.join(cmd), real.stderr, std_stderr))
+            raise AssertionError('The standard output of the command "{}" does not include the following correct result:\n{}\cmd result in shell:\n{}'.format(
+                ' '.join(cmd), real.stderr, std_stderr))
 
         # do not check if stdout is empty because it will contain return code...
 
         # check return code
         std_returncode = self._get_exit_code_from_stdout(std_stdout)
         if std_returncode != real.returncode:
-            raise AssertionError('The command "{}" should return {} but the shell indicates {}'.format(' '.join(cmd), real.returncode, std_returncode))
-
+            raise AssertionError('The command "{}" should return {} but the shell indicates {}'.format(
+                ' '.join(cmd), real.returncode, std_returncode))
 
     @test
     def test_wrongcmd(self):
@@ -161,8 +167,8 @@ class Test:
         _, std_stderr, _ = self._execute_shell_command(cmd)
 
         if not std_stderr:
-            raise AssertionError('The command "{}" should return an error but stderr is empty'.format(str_cmd))
-
+            raise AssertionError(
+                'The command "{}" should return an error but stderr is empty'.format(str_cmd))
 
     def test_foregroundjobs(self):
         print('--- TESTING FOREGROUND JOBS ---')
@@ -174,7 +180,8 @@ class Test:
 
         @test
         def test_error_foregroundjob_1(self):
-            self.test_error_foregroundjob(['ls', '-l', '--all', '--author', '-h', '-i', '-S', 'thisfileshouldnotexist'])
+            self.test_error_foregroundjob(
+                ['ls', '-l', '--all', '--author', '-h', '-i', '-S', 'thisfileshouldnotexist'])
         test_error_foregroundjob_1(self)
 
         @test
@@ -182,28 +189,28 @@ class Test:
             self.test_error_foregroundjob(['stat', 'thisfileshouldnotexist'])
         test_error_foregroundjob_2(self)
 
-
     @test
     def test_builtin_exit(self):
         # Cannot test exit because otherwise the shell will exit before some test on it (see execute_shell_command)
         # An empty command is tested instead since the exit command is tested anyway at the end
         self._execute_shell_command([''], timeout=1)
 
-
     @test
     def test_builtin_cd(self):
         # Test existing directory
         dir = tempfile.TemporaryDirectory()
-        _, _, cwd = self._execute_shell_command(['cd', dir.name], cwd='.', timeout=1)
+        _, _, cwd = self._execute_shell_command(
+            ['cd', dir.name], cwd='.', timeout=1)
         if dir.name != cwd:
-            raise AssertionError('Changing directory failed: the directory shouldbe {} but it is {}'.format(dir, cwd))
+            raise AssertionError(
+                'Changing directory failed: the directory shouldbe {} but it is {}'.format(dir, cwd))
 
         # Test non-existing directory
         cmd = ['cd', 'thisfoldershouldnotexist']
         _, stderr, _ = self._execute_shell_command(cmd, timeout=1)
         if not stderr:
-            raise AssertionError('The command "{}" should return an error but stderr is empty'.format(' '.join(cmd)))
-
+            raise AssertionError(
+                'The command "{}" should return an error but stderr is empty'.format(' '.join(cmd)))
 
     def test_builtin(self):
         print('--- TESTING BUITIN COMMANDS ---')
