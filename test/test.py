@@ -97,7 +97,7 @@ class Test:
             # Test if shell is still running
             if shell_ps.is_running():
                 raise AssertionError('Shell is still running after en of communication, either exit is not working or the shell does not terminate on Ctrl+D')
-            
+
             return stdout, stderr, cwd
 
         except subprocess.TimeoutExpired:
@@ -116,10 +116,10 @@ class Test:
         # check if command output (stdout, stderr and 0 exit status) is the one expected with ls command
         cmd = ['ls', '-l', '--all', '--author', '-h', '-i', '-S']
         std_stdout, std_stderr, _ = self._execute_shell_command(cmd)
-        
+
         # get "real" output
         real = subprocess.run(cmd, cwd=tempfile.gettempdir(), capture_output=True, encoding='utf-8')
-        
+
         # check standard output
         if not real.stdout in std_stdout:
             raise AssertionError('The standard output of the command "{}" does not include the following correct result:\n{}\cmd result in shell:\n{}'.format(' '.join(cmd), real.stdout, std_stdout))
@@ -132,15 +132,15 @@ class Test:
         std_returncode = self._get_exit_code_from_stdout(std_stdout)
         if std_returncode != real.returncode:
             raise AssertionError('The command "{}" should return {} but the shell indicates {}'.format(' '.join(cmd), real.returncode, std_returncode))
-    
-    
+
+
     def test_error_foregroundjob(self, cmd: list[str]):
         # check if command output (stdout, stderr and 0 exit status) is the one expected with ls command
         std_stdout, std_stderr, _ = self._execute_shell_command(cmd)
-        
+
         # get "real" output
         real = subprocess.run(cmd, cwd=tempfile.gettempdir(), capture_output=True, encoding='utf-8')
-        
+
         # check standard output
         if not real.stderr in std_stderr:
             raise AssertionError('The standard output of the command "{}" does not include the following correct result:\n{}\cmd result in shell:\n{}'.format(' '.join(cmd), real.stderr, std_stderr))
@@ -150,7 +150,7 @@ class Test:
         # check return code
         std_returncode = self._get_exit_code_from_stdout(std_stdout)
         if std_returncode != real.returncode:
-            raise AssertionError('The command "{}" should return {} but the shell indicates {}'.format(' '.join(cmd), real.returncode, std_returncode))        
+            raise AssertionError('The command "{}" should return {} but the shell indicates {}'.format(' '.join(cmd), real.returncode, std_returncode))
 
 
     @test
@@ -161,13 +161,13 @@ class Test:
         _, std_stderr, _ = self._execute_shell_command(cmd)
 
         if not std_stderr:
-            raise AssertionError('The command {} should return an error but stderr is empty'.format(str_cmd))
+            raise AssertionError('The command "{}" should return an error but stderr is empty'.format(str_cmd))
 
 
     def test_foregroundjobs(self):
         print('--- TESTING FOREGROUND JOBS ---')
         self.test_simple_foregroundjob()
-        
+
         self.test_wrongcmd()
 
         self.test_successfull_foregroundjob()
@@ -192,11 +192,17 @@ class Test:
 
     @test
     def test_builtin_cd(self):
+        # Test existing directory
         dir = tempfile.TemporaryDirectory()
         _, _, cwd = self._execute_shell_command(['cd', dir.name], cwd='.', timeout=1)
         if dir.name != cwd:
             raise AssertionError('Changing directory failed: the directory shouldbe {} but it is {}'.format(dir, cwd))
-        #TODO: test if the directory does not exist
+
+        # Test non-existing directory
+        cmd = ['cd', 'thisfoldershouldnotexist']
+        _, stderr, _ = self._execute_shell_command(cmd, timeout=1)
+        if not stderr:
+            raise AssertionError('The command "{}" should return an error but stderr is empty'.format(' '.join(cmd)))
 
 
     def test_builtin(self):
