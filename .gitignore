@@ -1,0 +1,4 @@
+*.o
+shell 
+.vscode 
+test.sh
