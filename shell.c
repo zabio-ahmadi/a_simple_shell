@@ -30,7 +30,7 @@ int main()
             parse_command(user_input, &cmd);
 
             // command builtin
-            if (strcmp(*cmd.argv, "exit") == 0)
+            if (strcmp(cmd.argv[0], "exit") == 0)
             {
                 exit(EXIT_SUCCESS);
             }
