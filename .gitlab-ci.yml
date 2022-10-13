@@ -33,7 +33,7 @@ build:
 test:
   stage: test
   before_script:
-    - apt update && apt -y install make python3-colorama
-    - apt update && apt -y install make python3-psutil
+    - apt-get update && apt -y install make python3-colorama
+    - apt-get update && apt -y install make python3-psutil
   script:
     - python3 test/test.py "$EXEC_NAME"
