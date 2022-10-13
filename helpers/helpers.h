@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #ifndef _SHELL_HELPER__
 #define _SHELL_HELPER__
-#define MAX_INPUT_SIZE 400
+#define MAX_INPUT_SIZE 500
 void control_key_handler(int sig);
 #define red "\033[1;31m"
 #define green "\033[0;32m"

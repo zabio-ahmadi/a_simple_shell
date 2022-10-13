@@ -21,7 +21,8 @@ int parse_command(char *user_input, cmd_t *cmd)
   cmd->argv = NULL;
   cmd->argc = -1;
   cmd->argv2 = NULL;
-  cmd->argc2 = -1,
+  // cmd->argc2 = -1,
+  cmd->argc2 = -1;
   cmd->type = CMD_SIMPLE;
   cmd->foreground = true;
 
@@ -50,7 +51,7 @@ int parse_command(char *user_input, cmd_t *cmd)
     if (strcmp("<", cmd->argv[i]) == 0)
       cmd->type = CMD_FILEIN;
 
-    // if symbol was found at i
+    // if symbol was found at i [<, >>, >]
     if (cmd->type == CMD_FILEOUT || cmd->type == CMD_FILEAPPEND || cmd->type == CMD_FILEIN)
     {
       if (cmd->argc > i + 1)
@@ -132,17 +133,20 @@ int ask_user_input(char *user_input)
   // printInColor(cyan, "[ ⚡ ]");
   // printInColor(cyan, " ~ [🌛]");
   // printInColor(cyan, " ~ [🎄]");
+  // printInColor(cyan, " [🐬]");
 
+  /**
+   * display current directory before the delimiter
+   */
   char directory[ARG_MAX];
-
   if (getcwd(directory, ARG_MAX) != NULL)
   {
-    printInColor(green, directory);
-    printInColor(cyan, " [🐬]");
+    printInColor(cyan, directory);
+    printInColor(cyan, " ~: [🦄]");
   }
   else
   {
-    printInColor(cyan, " [🐬]");
+    printInColor(cyan, " ~: [🦄]");
   }
 
   printInColor(white, " ");
