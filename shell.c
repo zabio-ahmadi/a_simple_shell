@@ -66,7 +66,8 @@ int main()
                      * EXIT: SEND SIGCHLD SIGNAL & FREE THE FILE DESCRIPTOR                               *
                      **************************************************************************************/
 
-                    if (execvp(cmd.argv[0], cmd.argv) < 0) // (first index value of the string array, array
+                    // ignore other code and execute only the paramter passed by argv by program stored in argv[0]
+                    if (execvp(cmd.argv[0], cmd.argv) < 0) // (first index value of the string array, array)
                     {
                         fprintf(stderr, "erreur d'execution de la commande");
                         exit(EXIT_FAILURE);
