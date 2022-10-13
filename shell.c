@@ -99,7 +99,7 @@ int main()
 
                     int child_status;
                     waitpid(pid, &child_status, 0);
-                    if (WIFEXITED(child_status)) //
+                    if (WIFEXITED(child_status))
                     {
                         printf("Foreground job exited with code %d\n", WEXITSTATUS(child_status));
                     }

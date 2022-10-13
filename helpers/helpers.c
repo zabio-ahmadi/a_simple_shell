@@ -12,7 +12,7 @@ void control_key_handler(int sig)
     if (err == -1)
         fprintf(stderr, "command error\n");
 
-    printInColor(red, "voulez vous vraiment quitter ? [oui/non] : ");
+    printInColor(cyan, "voulez vous vraiment quitter ? [oui/non] : ");
     char c;
     c = getchar();
     if (c == 'o' || c == 'O')
