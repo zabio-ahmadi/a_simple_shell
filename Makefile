@@ -1,8 +1,7 @@
 CC=gcc
-CFLAGS=-Wall -Wextra -std=c11 -g -O3 -fsanitize=leak -fsanitize=address  -fsanitize=address
+CFLAGS=-Wall -Wextra -std=gnu11 -g -O3 -fsanitize=leak -fsanitize=address
 
 VPATH:=helpers/ lib/ interface/ 
-
 .PHONY:all
 
 
@@ -24,6 +23,6 @@ clean:
 	rm -rf *.o shell
 	$(MAKE) cls
 
-rebuild: 
-	$(MAKE) clean 
-	$(MAKE) gsh
+rebuild: clean all
+	$(MAKE) clean # call clean objective 
+	$(MAKE) shell

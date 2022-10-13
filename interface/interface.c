@@ -142,14 +142,14 @@ int ask_user_input(char *user_input)
   if (getcwd(directory, ARG_MAX) != NULL)
   {
     printInColor(cyan, directory);
-    printInColor(cyan, " ~: [🦄]");
+    printInColor(cyan, "[🦄] ");
   }
   else
   {
-    printInColor(cyan, " ~: [🦄]");
+    printInColor(cyan, "[🦄] ");
   }
 
-  printInColor(white, " ");
+  printInColor(white, "");
   if (fgets(user_input, ARG_MAX, stdin) == NULL)
     return -1;
 
