@@ -185,7 +185,7 @@ class Test:
     def _get_exit_code_from_stdout(self, stdout: str) -> int:
         # Find line with keyword "code"
         for line in stdout.splitlines():
-            if "code" in line:
+            if "exited with code" in line:
                 # Assumes that exit code is after keyword code and that it is the only digits
                 return int(''.join([c for c in line.split('code')[-1] if c.isdigit()]))
         raise AssertionError('No exit code found')
