@@ -169,6 +169,7 @@ void dispose_command(cmd_t *cmd)
 }
 
 // Print command for debugging
+
 void print_command(cmd_t cmd)
 {
   printf("Command:\n");

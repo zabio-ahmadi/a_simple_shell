@@ -1,18 +1,26 @@
 CC=gcc
 CFLAGS=-Wall -Wextra -std=gnu11 -g -O3 -fsanitize=leak -fsanitize=address
 
+# := evaulate every time 
 VPATH:=helpers/ lib/ interface/ 
 .PHONY:all
 
 
 all: shell # first objective to call 
 
+# liage 
 shell: lib.o helpers.o interface.o shell.o
 	$(CC) $(CFLAGS) $^ -o $@ 
 
-lib.o: lib.c lib.h
-helpers.o: helpers.c helpers.h
-interface.o: interface.c interface.h 
+# $@ : repalce objective name 
+lib.o: lib/lib.c lib/lib.h
+	$(CC) $(CFLAGS) -c lib/lib.c -o $@
+
+helpers.o: helpers/helpers.c helpers/helpers.h
+	$(CC) $(CFLAGS) -c helpers/helpers.c -o $@
+
+interface.o: interface/interface.c interface/interface.h 
+	$(CC) $(CFLAGS) -c interface/interface.c -o $@
 
 
 run:
