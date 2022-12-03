@@ -140,20 +140,47 @@ void process_cmd_pipe(cmd_t cmd)
   }
 }
 
-// void handler(int signal)
+// void sigHandler(int signo)
 // {
-//   int child_status;
-//   // waitpid(1, &child_status, 0);
-//   waitpid(-1, &child_status, 0);
-
-//   if (WIFEXITED(child_status))
+//   pid_t pid;
+//   printf("[%d]signal received \n", getpid());
+//   pid = fork();
+//   if (pid == 0)
 //   {
-//     printf("Foreground job exited with code %d\n", WEXITSTATUS(child_status));
+//     printf("[%d] I m child process \n", getpid());
+//     signal(SIGHUP, sigHandler);
+//     execl("./chainNew", "chainNew", (char *)0);
+//   }
+//   else if (pid > 0)
+//   {
+//     printf("[%d] I m Parent process \n", getpid());
+//     sleep(3);
+//     exit(0);
+//   }
+//   else
+//   {
+//     printf("[%d]  Fork Failed \n", getpid());
 //   }
 // }
+int background_process_id;
+void handler()
+{
+  // int pid;
+  // int status;
+  // pid = wait(NULL);
+  // printf("Pid %d exited.\n", pid);
+  int child_status;
+  waitpid(background_process_id, &child_status, 0);
+
+  if (WIFEXITED(child_status))
+  {
+    printf("Foreground job exited with code %d\n", WEXITSTATUS(child_status));
+  }
+}
 
 void process_cmd_background(cmd_t cmd)
 {
+
   pid_t pid = fork();
   // is child
   if (pid == 0)
@@ -167,34 +194,21 @@ void process_cmd_background(cmd_t cmd)
       exit(EXIT_FAILURE);
     }
   }
-  if (pid < 0)
-  {
-    fprintf(stderr, "canot fork\n");
-  }
   // parent
-  if (pid > 0)
+  else
   {
-    signal(SIGCHLD, SIG_IGN);
-    // signal(SIGCHLD, handler);
+    background_process_id = pid;
+    signal(SIGCHLD, handler);
   }
 }
-
 void exec_shell()
 {
-
-  // ignore signals
-  signal(SIGTERM, SIG_IGN);
-  signal(SIGQUIT, SIG_IGN);
-
   cmd_t cmd;
   char user_input[MAX_INPUT_SIZE] = {};
-
   while (1)
   {
-
     if (ask_user_input(user_input) > 0)
     {
-
       parse_command(user_input, &cmd);
       bool isbuiltin = is_built_in(cmd);
 

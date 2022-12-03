@@ -15,5 +15,9 @@ void process_built_in(cmd_t cmd);
 void process_cmd_simple(cmd_t cmd);
 void process_cmd_fileout(cmd_t cmd);
 void process_cmd_pipe(cmd_t cmd);
+void handler();
+void process_cmd_background(cmd_t cmd);
+
 void exec_shell();
+
 #endif
