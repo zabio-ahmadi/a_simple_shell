@@ -1,4 +1,5 @@
 #include "lib.h"
+#include <sched.h>
 
 pid_t child_pid;
 
@@ -192,6 +193,10 @@ void signal_handler(int sig)
       kill(child_pid, sig);
     }
     break;
+  case SIGHUP:
+    kill(child_pid, sig);
+    exit(EXIT_SUCCESS);
+    break;
   default:
     break;
   }
@@ -204,13 +209,14 @@ void exec_shell()
   signal(SIGTERM, signal_handler);
   signal(SIGQUIT, signal_handler);
   signal(SIGINT, signal_handler);
-  signal(SIGHUP, signal_handler);
+  // signal(SIGHUP, signal_handler);
 
   cmd_t cmd;
   char user_input[MAX_INPUT_SIZE] = {};
-
   while (1)
   {
+    // optimize performance
+    // sched_yield();
 
     if (ask_user_input(user_input) > 0)
     {
