@@ -1,5 +1,7 @@
 #include "lib.h"
 
+pid_t child_pid;
+
 bool is_built_in(cmd_t cmd)
 {
   return ((strcmp(cmd.argv[0], "exit") == 0) || (strcmp(cmd.argv[0], "cd") == 0));
@@ -24,6 +26,7 @@ void process_built_in(cmd_t cmd)
 void process_cmd_simple(cmd_t cmd)
 {
   pid_t pid = fork();
+  child_pid = pid;
   // is child
   if (pid == 0)
   {
@@ -51,6 +54,7 @@ void process_cmd_simple(cmd_t cmd)
 void process_cmd_fileout(cmd_t cmd)
 {
   pid_t pid = fork();
+  child_pid = pid;
   if (pid == 0)
   {
     int destination_fd;
@@ -96,6 +100,7 @@ void process_cmd_pipe(cmd_t cmd)
     perror("cannot pipe\n");
 
   pid1 = fork();
+  child_pid = pid1;
   if (pid1 < 0)
     perror("failed to create process 1\n");
 
@@ -110,6 +115,7 @@ void process_cmd_pipe(cmd_t cmd)
   else
   {
     pid2 = fork();
+    child_pid = pid2;
     if (pid2 < 0)
       perror("failed to create process 2\n");
 
@@ -140,21 +146,10 @@ void process_cmd_pipe(cmd_t cmd)
   }
 }
 
-// void handler(int signal)
-// {
-//   int child_status;
-//   // waitpid(1, &child_status, 0);
-//   waitpid(-1, &child_status, 0);
-
-//   if (WIFEXITED(child_status))
-//   {
-//     printf("Foreground job exited with code %d\n", WEXITSTATUS(child_status));
-//   }
-// }
-
 void process_cmd_background(cmd_t cmd)
 {
   pid_t pid = fork();
+  child_pid = pid;
   // is child
   if (pid == 0)
   {
@@ -179,13 +174,39 @@ void process_cmd_background(cmd_t cmd)
   }
 }
 
+// handler
+
+void signal_handler(int sig)
+{
+  switch (sig)
+  {
+  case SIGTERM:
+    signal(SIGTERM, SIG_IGN);
+    break;
+  case SIGQUIT:
+    signal(SIGQUIT, SIG_IGN);
+    break;
+  case SIGINT:
+    if (child_pid != 0)
+    {
+      kill(child_pid, sig);
+    }
+    break;
+  default:
+    break;
+  }
+}
+
 void exec_shell()
 {
 
   // ignore signals
-  signal(SIGTERM, SIG_IGN);
-  signal(SIGQUIT, SIG_IGN);
+  signal(SIGTERM, signal_handler);
+  signal(SIGQUIT, signal_handler);
+  signal(SIGINT, signal_handler);
+  signal(SIGHUP, signal_handler);
 
+  // signal(SIGINT, SIG_IGN);
   cmd_t cmd;
   char user_input[MAX_INPUT_SIZE] = {};
 
@@ -218,3 +239,4 @@ void exec_shell()
     }
   }
 }
+// https://stackoverflow.com/questions/49329057/how-to-redirect-signal-to-child-process-from-parent-process
