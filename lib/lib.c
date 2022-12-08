@@ -206,7 +206,6 @@ void exec_shell()
   signal(SIGINT, signal_handler);
   signal(SIGHUP, signal_handler);
 
-  // signal(SIGINT, SIG_IGN);
   cmd_t cmd;
   char user_input[MAX_INPUT_SIZE] = {};
 
@@ -239,4 +238,3 @@ void exec_shell()
     }
   }
 }
-// https://stackoverflow.com/questions/49329057/how-to-redirect-signal-to-child-process-from-parent-process
