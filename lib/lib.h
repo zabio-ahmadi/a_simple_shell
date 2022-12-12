@@ -15,9 +15,9 @@ void process_built_in(cmd_t cmd);
 void process_cmd_simple(cmd_t cmd);
 void process_cmd_fileout(cmd_t cmd);
 void process_cmd_pipe(cmd_t cmd);
-void handler();
+void signal_handler(int sig);
 void process_cmd_background(cmd_t cmd);
-
+int copy(const int fd_from, const char *to);
 void exec_shell();
 
 #endif

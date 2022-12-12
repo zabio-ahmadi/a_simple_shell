@@ -1,7 +1,61 @@
 #include "lib.h"
-#include <sched.h>
+#include <errno.h>
 
 pid_t child_pid;
+
+int copy(const int fd_from, const char *to)
+{
+  int fd_to;
+  char buf[4096];
+  ssize_t nread;
+
+  fd_to = open(to, O_WRONLY | O_EXCL, 0x777);
+
+  if (fd_to < 0)
+  {
+    int savedError = errno;
+    close(fd_from);
+    fprintf(stderr, "Could not open the file %s: %s\n",
+            to, strerror(savedError));
+    return -1;
+  }
+
+  while (nread = read(fd_from, buf, sizeof buf), nread > 0)
+  {
+    char *out_ptr = buf;
+    ssize_t nwritten;
+    do
+    {
+      nwritten = write(fd_to, out_ptr, nread);
+      if (nwritten >= 0)
+      {
+        nread -= nwritten;
+        out_ptr += nwritten;
+      }
+      else if (errno != EINTR)
+      {
+        int savedError = errno;
+        close(fd_from);
+        close(fd_to);
+        fprintf(stderr, "Could not copy to %s: %s\n", to, strerror(savedError));
+        return -1;
+      }
+    } while (nread > 0);
+  }
+
+  if (nread != 0)
+  {
+    int savedError = errno;
+    close(fd_from);
+    close(fd_to);
+    fprintf(stderr, "Could not read: %s\n", strerror(savedError));
+    return -1;
+  }
+
+  close(fd_from);
+  close(fd_to);
+  return 0;
+}
 
 bool is_built_in(cmd_t cmd)
 {
@@ -154,6 +208,9 @@ void process_cmd_background(cmd_t cmd)
   // is child
   if (pid == 0)
   {
+    // rediriger l’entrée standard du job vers /dev/null pour éviter les conflits avec le shell
+    copy(STDOUT_FILENO, "/dev/null");
+
     // ignore other code and execute only the paramter passed by argv by program stored in argv[0]
     // inspired by documentation code example
     if (execvp(cmd.argv[0], cmd.argv) < 0) // (first index value of the string array, array)
@@ -170,8 +227,9 @@ void process_cmd_background(cmd_t cmd)
   // parent
   if (pid > 0)
   {
-    signal(SIGCHLD, SIG_IGN);
-    // signal(SIGCHLD, handler);
+    signal(SIGCHLD, signal_handler);
+    // signal(SIGCHLD, SIG_IGN);
+    //  signal(SIGCHLD, handler);
   }
 }
 
@@ -186,6 +244,10 @@ void signal_handler(int sig)
     break;
   case SIGQUIT:
     signal(SIGQUIT, SIG_IGN);
+    break;
+
+  case SIGCHLD:
+    signal(SIGCHLD, SIG_IGN);
     break;
   case SIGINT:
     if (child_pid != 0)
