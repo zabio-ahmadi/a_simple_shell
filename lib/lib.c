@@ -256,7 +256,7 @@ void signal_handler(int sig)
     }
     break;
   case SIGHUP:
-    kill(child_pid, sig);
+    // kill(child_pid, sig);
     exit(EXIT_SUCCESS);
     break;
   default:
@@ -271,7 +271,7 @@ void exec_shell()
   signal(SIGTERM, signal_handler);
   signal(SIGQUIT, signal_handler);
   signal(SIGINT, signal_handler);
-  // signal(SIGHUP, signal_handler);
+  signal(SIGHUP, signal_handler);
 
   cmd_t cmd;
   char user_input[MAX_INPUT_SIZE] = {};
