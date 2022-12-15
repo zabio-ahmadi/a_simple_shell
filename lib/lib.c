@@ -256,8 +256,12 @@ void signal_handler(int sig)
     }
     break;
   case SIGHUP:
-    // kill(child_pid, sig);
-    exit(EXIT_SUCCESS);
+    // if parent proccessus
+    if (child_pid != 0)
+    {
+      signal(SIGHUP, SIG_IGN);
+      kill(0, SIGTERM);
+    }
     break;
   default:
     break;
