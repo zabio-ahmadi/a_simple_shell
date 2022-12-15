@@ -1,7 +1,11 @@
 #include "lib.h"
 #include <errno.h>
 
-pid_t child_pid;
+// pid_t child_pid;
+
+#define SIZE 10
+pid_t child_pid[SIZE];
+int proc_index = 0;
 
 int copy(const int fd_from, const char *to)
 {
@@ -81,7 +85,7 @@ void process_built_in(cmd_t cmd)
 void process_cmd_simple(cmd_t cmd)
 {
   pid_t pid = fork();
-  child_pid = pid;
+  child_pid[proc_index++] = pid;
   // is child
   if (pid == 0)
   {
@@ -109,7 +113,7 @@ void process_cmd_simple(cmd_t cmd)
 void process_cmd_fileout(cmd_t cmd)
 {
   pid_t pid = fork();
-  child_pid = pid;
+  child_pid[proc_index++] = pid;
   if (pid == 0)
   {
     int destination_fd;
@@ -155,7 +159,7 @@ void process_cmd_pipe(cmd_t cmd)
     perror("cannot pipe\n");
 
   pid1 = fork();
-  child_pid = pid1;
+  child_pid[proc_index++] = pid1;
   if (pid1 < 0)
     perror("failed to create process 1\n");
 
@@ -170,7 +174,7 @@ void process_cmd_pipe(cmd_t cmd)
   else
   {
     pid2 = fork();
-    child_pid = pid2;
+    child_pid[proc_index++] = pid2;
     if (pid2 < 0)
       perror("failed to create process 2\n");
 
@@ -204,10 +208,11 @@ void process_cmd_pipe(cmd_t cmd)
 void process_cmd_background(cmd_t cmd)
 {
   pid_t pid = fork();
-  child_pid = pid;
   // is child
+  child_pid[proc_index++] = pid;
   if (pid == 0)
   {
+
     // rediriger l’entrée standard du job vers /dev/null pour éviter les conflits avec le shell
     copy(STDOUT_FILENO, "/dev/null");
 
@@ -250,18 +255,17 @@ void signal_handler(int sig)
     signal(SIGCHLD, SIG_IGN);
     break;
   case SIGINT:
-    if (child_pid != 0)
-    {
-      kill(child_pid, sig);
-    }
+    for (int i = 0; i < proc_index; i++)
+      if (child_pid[i] != 0)
+        kill(child_pid[i], sig);
     break;
   case SIGHUP:
     // if parent proccessus
-    if (child_pid != 0)
-    {
-      signal(SIGHUP, SIG_IGN);
-      kill(0, SIGTERM);
-    }
+    for (int i = 0; i < proc_index; i++)
+      if (child_pid[i] != 0)
+        kill(child_pid[i], SIGTERM);
+    exit(EXIT_SUCCESS);
+
     break;
   default:
     break;
