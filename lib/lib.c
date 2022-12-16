@@ -256,6 +256,9 @@ void signal_handler(int sig)
     for (int i = 0; i < proc_index; i++)
       if (child_pid[i] != 0)
         kill(child_pid[i], sig);
+
+    waitpid(-1, NULL, 0);
+
     break;
   case SIGHUP:
     // kill all child processus correclty
