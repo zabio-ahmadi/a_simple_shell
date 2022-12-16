@@ -319,13 +319,13 @@ void signal_handler(int sig)
     for (int i = 0; i < proc_index; i++)
       if (child_pid[i] != 0)
         kill(child_pid[i], SIGTERM);
-    // Declare a variable to store the exit status of the child process
-    int child_status;
-    // Wait for any child process to exit
-    waitpid(-1, &child_status, 0);
-    // If the child process terminated normally, print its exit status and exit the program
-    if (WIFEXITED(child_status))
-      printf("Foreground job exited with code %d\n", WEXITSTATUS(child_status));
+    // // Declare a variable to store the exit status of the child process
+    // int child_status;
+    // // Wait for any child process to exit
+    // waitpid(-1, &child_status, 0);
+    // // If the child process terminated normally, print its exit status and exit the program
+    // if (WIFEXITED(child_status))
+    //   printf("Foreground job exited with code %d\n", WEXITSTATUS(child_status));
     exit(0);
     break;
   default:
@@ -336,21 +336,15 @@ void signal_handler(int sig)
 void exec_shell()
 {
 
-  // struct sigaction sa;
-
-  // sa.sa_handler = signal_handler;
-  // sigemptyset(&sa.sa_mask);
-  // sigaddset(&sa.sa_mask, SIGHUP);
-  // sa.sa_flags = SA_SIGINFO | SA_RESTART;
-  // sigaction(SIGTERM, &sa, NULL);
-  // sigaction(SIGQUIT, &sa, NULL);
-  // sigaction(SIGINT, &sa, NULL);
-  // sigaction(SIGHUP, &sa, NULL);
-
-  signal(SIGTERM, signal_handler);
-  signal(SIGQUIT, signal_handler);
-  signal(SIGINT, signal_handler);
-  signal(SIGHUP, signal_handler);
+  struct sigaction sa;
+  sa.sa_handler = signal_handler;
+  sigemptyset(&sa.sa_mask);
+  sigaddset(&sa.sa_mask, SIGHUP);
+  sa.sa_flags = SA_SIGINFO | SA_RESTART;
+  sigaction(SIGTERM, &sa, NULL);
+  sigaction(SIGQUIT, &sa, NULL);
+  sigaction(SIGINT, &sa, NULL);
+  sigaction(SIGHUP, &sa, NULL);
 
   // Declare a variable to store the parsed command
   cmd_t cmd;
