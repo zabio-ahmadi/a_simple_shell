@@ -225,16 +225,14 @@ void process_cmd_background(cmd_t cmd)
       exit(EXIT_FAILURE);
     }
   }
-  if (pid < 0)
+  else if (pid < 0)
   {
     fprintf(stderr, "canot fork\n");
   }
   // parent
-  if (pid > 0)
+  else
   {
     signal(SIGCHLD, signal_handler);
-    // signal(SIGCHLD, SIG_IGN);
-    //  signal(SIGCHLD, handler);
   }
 }
 
@@ -260,12 +258,18 @@ void signal_handler(int sig)
         kill(child_pid[i], sig);
     break;
   case SIGHUP:
-    // if parent proccessus
+    // kill all child processus correclty
     for (int i = 0; i < proc_index; i++)
       if (child_pid[i] != 0)
         kill(child_pid[i], SIGTERM);
-    exit(EXIT_SUCCESS);
 
+    int child_status;
+    // wait for any child process to exit
+    waitpid(-1, &child_status, 0);
+
+    if (WIFEXITED(child_status))
+      printf("Foreground job exited with code %d\n", WEXITSTATUS(child_status));
+    exit(0);
     break;
   default:
     break;
