@@ -342,7 +342,7 @@ void exec_shell()
 
   sigemptyset(&sa.sa_mask);
   sigaddset(&sa.sa_mask, SIGHUP);
-  sa.sa_flags = SA_SIGINFO;
+  sa.sa_flags = SA_SIGINFO | SA_RESTART;
   sigaction(SIGTERM, &sa, NULL);
   sigaction(SIGQUIT, &sa, NULL);
   sigaction(SIGINT, &sa, NULL);
