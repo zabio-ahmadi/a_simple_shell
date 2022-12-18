@@ -179,6 +179,11 @@ void process_cmd_pipe(cmd_t cmd)
     {
       printf("Foreground job exited with code %d\n", WEXITSTATUS(child_1_status));
     }
+
+    if (WIFEXITED(child_2_status))
+    {
+      printf("Foreground job exited with code %d\n", WEXITSTATUS(child_2_status));
+    }
   }
 }
 void process_cmd_background(cmd_t cmd)
@@ -219,13 +224,16 @@ void handle_SIGCHILD()
 {
   int status;
   waitpid(-1, &status, WNOHANG);
+
+  if (WIFEXITED(status))
+    printf("Background job exited with code %d\n", WEXITSTATUS(status));
 }
 
 void handle_SIGINT(int sig)
 {
   for (int i = 0; i < proc_index; i++)
   {
-    if (child_pid[i] != 0)
+    if (child_pid[i] != -1)
       kill(child_pid[i], sig);
   }
 
@@ -236,8 +244,8 @@ void handle_SIGINT(int sig)
 void handle_SIGHUP()
 {
   // kill all child processus correclty
-  for (int i = 0; i < proc_index; i++)
-    if (child_pid[i] != 0)
+  for (int i = proc_index; i >= 0; i--)
+    if (child_pid[i] != -1)
       kill(child_pid[i], SIGTERM);
 
   int child_status;
@@ -289,6 +297,13 @@ void signal_handler(int sig)
 void exec_shell()
 {
 
+  // configure child process id table
+  for (size_t i = 0; i < SIZE; i++)
+  {
+    child_pid[i] = -1;
+  }
+  proc_index = 0;
+
   // Set up the signal handler
   struct sigaction sa;
   sa.sa_handler = signal_handler;
@@ -296,25 +311,25 @@ void exec_shell()
   sa.sa_flags = SA_RESTART;
   if (sigaction(SIGTERM, &sa, NULL) == -1)
   {
-    perror("sigaction");
+    perror("sigaction : SIGTERM");
     exit(EXIT_FAILURE);
   }
 
   if (sigaction(SIGQUIT, &sa, NULL) == -1)
   {
-    perror("sigaction");
+    perror("sigaction : SIGQUIT");
     exit(EXIT_FAILURE);
   }
 
   if (sigaction(SIGINT, &sa, NULL) == -1)
   {
-    perror("sigaction");
+    perror("sigaction : SIGINT");
     exit(EXIT_FAILURE);
   }
 
   if (sigaction(SIGHUP, &sa, NULL) == -1)
   {
-    perror("sigaction");
+    perror("sigaction : SIGHUP");
     exit(EXIT_FAILURE);
   }
 
@@ -336,16 +351,16 @@ void exec_shell()
       if (isbuiltin)
         process_built_in(cmd);
       // If cmd is a simple command to be run in the foreground, process it
-      if (cmd.type == CMD_SIMPLE && cmd.foreground == true)
+      else if (cmd.type == CMD_SIMPLE && cmd.foreground == true)
         process_cmd_simple(cmd);
       // If cmd is a command with output redirection to a file, process it
-      if (cmd.type == CMD_FILEOUT)
+      else if (cmd.type == CMD_FILEOUT)
         process_cmd_fileout(cmd);
       // If cmd is a command with a pipe, process it
-      if (cmd.type == CMD_PIPE)
+      else if (cmd.type == CMD_PIPE)
         process_cmd_pipe(cmd);
       // If cmd is a command to be run in the background, process it
-      if (cmd.foreground == false)
+      else if (cmd.foreground == false)
       {
         process_cmd_background(cmd);
       }
