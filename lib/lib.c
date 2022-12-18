@@ -315,7 +315,7 @@ void signal_handler(int sig)
       }
     }
     // Wait for any child process to exit
-    waitpid(-1, NULL, 0);
+    waitpid(-1, NULL, 1);
     break;
   // If sig is SIGHUP
   case SIGHUP:
@@ -330,7 +330,7 @@ void signal_handler(int sig)
     // Declare a variable to store the exit status of the child process
     int child_status;
     // Wait for any child process to exit
-    waitpid(-1, &child_status, 0);
+    waitpid(-1, &child_status, 1);
     // If the child process terminated normally, print its exit status and exit the program
     if (WIFEXITED(child_status))
     {
