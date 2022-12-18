@@ -20,7 +20,7 @@ build:
   # before_script:
   #   - apt update && apt -y install make autoconf
   script:
-    - make clean
+    - rm -rf *.o shell
     - make
   artifacts:
     paths:
