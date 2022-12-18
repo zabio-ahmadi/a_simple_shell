@@ -123,9 +123,9 @@ class Shell:
         init_ps = psutil.Process(1)
         for p in init_ps.children():
             init_cmd = Cmd(p.cmdline())
-            # if str(init_cmd) == str_cmd:
-            #     raise AssertionError(
-            #         'The command "{}" seem to be a child of process 1 -> orphelin process'.format(str_cmd))
+            if str(init_cmd) == str_cmd:
+                raise AssertionError(
+                    'The command "{}" seem to be a child of process 1 -> orphelin process'.format(str_cmd))
 
     def wait_children(self, test_zombies: bool = True, timeout: int = 3):
         """ Wait for children of the shell to temrinate
