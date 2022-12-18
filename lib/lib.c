@@ -319,13 +319,14 @@ void signal_handler(int sig)
     for (int i = 0; i < proc_index; i++)
       if (child_pid[i] != 0)
         kill(child_pid[i], SIGTERM);
-    // // Declare a variable to store the exit status of the child process
-    // int child_status;
-    // // Wait for any child process to exit
-    // waitpid(-1, &child_status, 0);
-    // // If the child process terminated normally, print its exit status and exit the program
-    // if (WIFEXITED(child_status))
-    //   printf("Foreground job exited with code %d\n", WEXITSTATUS(child_status));
+
+    // Declare a variable to store the exit status of the child process
+    int child_status;
+    // Wait for any child process to exit
+    waitpid(-1, &child_status, 0);
+    // If the child process terminated normally, print its exit status and exit the program
+    if (WIFEXITED(child_status))
+      printf("Foreground job exited with code %d\n", WEXITSTATUS(child_status));
     exit(0);
     break;
   default:
