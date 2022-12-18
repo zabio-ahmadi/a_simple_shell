@@ -324,7 +324,7 @@ void signal_handler(int sig)
     {
       if (child_pid[i] != 0)
       {
-        kill(child_pid[i], SIGTERM);
+        kill(child_pid[i], SIGKILL);
       }
     }
     // Declare a variable to store the exit status of the child process
