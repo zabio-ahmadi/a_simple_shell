@@ -282,62 +282,44 @@ void process_cmd_background(cmd_t cmd)
 }
 
 // handler
-
 void signal_handler(int sig)
 {
-  // Check the value of sig
   switch (sig)
   {
-  // If sig is SIGTERM
   case SIGTERM:
-    // Set the signal handler for SIGTERM to ignore the signal
-    signal(sig, SIG_IGN);
+    signal(SIGTERM, SIG_IGN);
     break;
-  // If sig is SIGQUIT
   case SIGQUIT:
-    // Set the signal handler for SIGQUIT to ignore the signal
-    signal(sig, SIG_IGN);
+    signal(SIGQUIT, SIG_IGN);
     break;
 
-  // If sig is SIGCHLD
   case SIGCHLD:
-    // Set the signal handler for SIGCHLD to ignore the signal
-    signal(sig, SIG_IGN);
+    signal(SIGCHLD, SIG_IGN);
     break;
-  // If sig is SIGINT
   case SIGINT:
-    // Send sig to all child processes in child_pid using kill()
     for (int i = 0; i < proc_index; i++)
-    {
       if (child_pid[i] != 0)
-      {
         kill(child_pid[i], sig);
-        break;
-      // If sig is SIGHUP
-      case SIGHUP:
-        // // Send SIGTERM to all child processes in child_pid using kill()
-        for (int i = 0; i < proc_index; i++)
-        {
-          if (child_pid[i] != 0)
-          {
-            kill(child_pid[i], SIGKILL);
-          }
-        }
-        // Declare a variable to store the exit status of the child process
-        int child_status;
-        // Wait for any child process to exit
-        waitpid(-1, &child_status, 1);
-        // If the child process terminated normally, print its exit status and exit the program
-        if (WIFEXITED(child_status))
-        {
-          printf("Foreground job exited with code %d\n", WEXITSTATUS(child_status));
-        }
-        exit(0);
-        break;
-      default:
-        break;
-      }
-    }
+
+    waitpid(-1, NULL, 0);
+
+    break;
+  case SIGHUP:
+    // kill all child processus correclty
+    for (int i = 0; i < proc_index; i++)
+      if (child_pid[i] != 0)
+        kill(child_pid[i], SIGTERM);
+
+    int child_status;
+    // wait for any child process to exit
+    waitpid(-1, &child_status, 0);
+
+    if (WIFEXITED(child_status))
+      printf("Foreground job exited with code %d\n", WEXITSTATUS(child_status));
+    exit(0);
+    break;
+  default:
+    break;
   }
 }
 
