@@ -6,8 +6,6 @@
 pid_t child_pid[SIZE]; // global array to store process IDs of child processes
 int proc_index = 0;    // global variable to keep track of number of child processes
 
-pid_t background_pid = 0;
-
 // function definition for "is_built_in" taking in a "cmd_t" object called "cmd"
 bool is_built_in(cmd_t cmd)
 {
@@ -45,7 +43,6 @@ void process_cmd_simple(cmd_t cmd)
   // if the current process is the parent process
   else
   {
-    background_pid = pid;
     int child_status;               // variable to store the exit status of the child process
     waitpid(pid, &child_status, 0); // wait for the child process with process id "pid" to finish and store its exit status in "child_status"
     if (WIFEXITED(child_status))    // if the child process terminated normally
@@ -92,7 +89,6 @@ void process_cmd_fileout(cmd_t cmd)
   }
   else // if the current process is the parent process
   {
-    background_pid = pid;
     int child_status;               // variable to store the exit status of the child process
     waitpid(pid, &child_status, 0); // wait for the child process with process id "pid" to finish and store its exit status in "child_status"
     if (WIFEXITED(child_status))    // if the child process terminated normally
@@ -142,7 +138,6 @@ void process_cmd_pipe(cmd_t cmd)
   // If the current process is the parent process
   else
   {
-    background_pid = pid1;
     // Create another child process
     pid2 = fork();
     // Store the process ID of the second child process in the array
@@ -216,7 +211,6 @@ void process_cmd_background(cmd_t cmd)
   // If the current process is the parent process
   else
   {
-    background_pid = pid;
     signal(SIGCHLD, signal_handler);
   }
 }
