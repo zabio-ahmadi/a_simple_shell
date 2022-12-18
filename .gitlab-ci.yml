@@ -20,15 +20,14 @@ build:
   # before_script:
   #   - apt update && apt -y install make autoconf
   script:
-    - rm -rf *.o shell
     - make
   artifacts:
     paths:
       - "$EXEC_NAME"
   # depending on your build setup it's most likely a good idea to cache outputs to reduce the build time
-  # cache:
-  #   paths:
-  #     - "*.o"
+  cache:
+    paths:
+      - "*.o"
 
 # run tests using the binary built before
 test:
