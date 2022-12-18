@@ -318,23 +318,27 @@ void signal_handler(int sig)
     break;
   // If sig is SIGHUP
   case SIGHUP:
-    // Send SIGTERM to all child processes in child_pid using kill()
+    // // Send SIGTERM to all child processes in child_pid using kill()
     for (int i = 0; i < proc_index; i++)
       if (child_pid[i] != -1)
       {
         kill(child_pid[i], sig);
         child_pid[i] = -1;
       }
-    // Declare a variable to store the exit status of the child process
-    int child_status;
-    // Wait for any child process to exit
-    int err = waitpid(-1, &child_status, 1);
-    printf("there is an error : %d\n", err);
-    // If the child process terminated normally, print its exit status and exit the program
-    if (WIFEXITED(child_status))
-    {
-      printf("Foreground job exited with code %d\n", WEXITSTATUS(child_status));
-    }
+    // // Declare a variable to store the exit status of the child process
+    // int child_status;
+    // // Wait for any child process to exit
+    // int err = waitpid(-1, &child_status, 1);
+    // printf("there is an error : %d\n", err);
+    // // If the child process terminated normally, print its exit status and exit the program
+    // if (WIFEXITED(child_status))
+    // {
+    //   printf("Foreground job exited with code %d\n", WEXITSTATUS(child_status));
+    // }
+    // exit(0);
+
+    while (waitpid(-1, NULL, WNOHANG) > 0)
+      ;
     exit(0);
     break;
   default:
