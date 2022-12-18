@@ -7,73 +7,6 @@ pid_t child_pid[SIZE]; // global array to store process IDs of child processes
 int proc_index = 0;    // global variable to keep track of number of child processes
 
 pid_t background_pid = 0;
-// function to copy contents of a file identified by file descriptor fd_from to a new file specified by 'to' argument
-int copy(const int fd_from, const char *to)
-{
-  int fd_to;
-  char buf[4096];
-  ssize_t nread;
-
-  // open 'to' file for writing with exclusive access and permissions 0x777
-  fd_to = open(to, O_WRONLY | O_EXCL, 0x777);
-
-  // if 'to' file could not be opened
-  if (fd_to < 0)
-  {
-    // save error number and close 'from' file
-    int savedError = errno;
-    close(fd_from);
-    // print error message to stderr and return -1
-    fprintf(stderr, "Could not open the file %s: %s\n", to, strerror(savedError));
-    return -1;
-  }
-
-  // read data from 'from' file in 4096-byte blocks and write to 'to' file
-  while (nread = read(fd_from, buf, sizeof buf), nread > 0)
-  {
-    char *out_ptr = buf;
-    ssize_t nwritten;
-    do
-    {
-      // write data from 'buf' to 'to' file
-      nwritten = write(fd_to, out_ptr, nread);
-      // if write was successful
-      if (nwritten >= 0)
-      {
-        // reduce number of bytes left to write by number of bytes written
-        nread -= nwritten;
-        // move pointer to next block of data to be written
-        out_ptr += nwritten;
-      }
-      // if write was interrupted by a signal
-      else if (errno != EINTR)
-      {
-        // save error number, close 'from' and 'to' files, and print error message
-        int savedError = errno;
-        close(fd_from);
-        close(fd_to);
-        fprintf(stderr, "Could not copy to %s: %s\n", to, strerror(savedError));
-        return -1;
-      }
-    } while (nread > 0); // repeat until all data has been written
-  }
-
-  // if there was an error reading from 'from' file
-  if (nread != 0)
-  {
-    // save error number, close 'from' and 'to' files, and print error message
-    int savedError = errno;
-    close(fd_from);
-    close(fd_to);
-    fprintf(stderr, "Could not read: %s\n", strerror(savedError));
-    return -1;
-  }
-
-  // close 'from' and 'to' files
-  close(fd_from);
-  close(fd_to);
-  return 0; // return success
-}
 
 // function definition for "is_built_in" taking in a "cmd_t" object called "cmd"
 bool is_built_in(cmd_t cmd)
@@ -261,7 +194,10 @@ void process_cmd_background(cmd_t cmd)
   if (pid == 0)
   {
     // Redirect stdout to /dev/null to avoid conflicts with the shell
-    copy(STDOUT_FILENO, "/dev/null");
+    int dev_null = open("/dev/null", O_WRONLY, 0777);
+    dup2(dev_null, STDOUT_FILENO);
+    close(dev_null);
+
     // Execute the command specified in cmd using execvp()
     if (execvp(cmd.argv[0], cmd.argv) < 0)
     {
@@ -287,50 +223,71 @@ void process_cmd_background(cmd_t cmd)
 
 void handle_SIGCHILD()
 {
-  // printf("\n%d",sig);
   int status;
   waitpid(-1, &status, WNOHANG);
+}
+
+void handle_SIGINT(int sig)
+{
+  for (int i = 0; i < proc_index; i++)
+  {
+    if (child_pid[i] != 0)
+      kill(child_pid[i], sig);
+  }
+
+  waitpid(-1, NULL, WNOHANG);
+  proc_index = 0;
+}
+
+void handle_SIGHUP()
+{
+  // kill all child processus correclty
+  for (int i = 0; i < proc_index; i++)
+    if (child_pid[i] != 0)
+      kill(child_pid[i], SIGTERM);
+
+  int child_status;
+  // wait for any child process to exit
+  // don't block waiting
+  waitpid(-1, &child_status, WNOHANG);
+
+  if (WIFEXITED(child_status))
+    printf("Foreground job exited with code %d\n", WEXITSTATUS(child_status));
+  proc_index = 0;
+  exit(0);
 }
 
 // handler
 void signal_handler(int sig)
 {
+  // Check the value of sig
   switch (sig)
   {
+  // If sig is SIGTERM
   case SIGTERM:
+    // Set the signal handler for SIGTERM to ignore the signal
     signal(SIGTERM, SIG_IGN);
     break;
+
+  // If sig is SIGQUIT
   case SIGQUIT:
+    // Set the signal handler for SIGQUIT to ignore the signal
     signal(SIGQUIT, SIG_IGN);
     break;
 
+  // If sig is SIGCHLD
   case SIGCHLD:
+    // call handler for SIGCHLD
     handle_SIGCHILD();
     break;
-  case SIGINT:
-    for (int i = 0; i < proc_index; i++)
-    {
-      if (child_pid[i] != 0)
-        kill(child_pid[i], sig);
-    }
 
-    waitpid(-1, NULL, 0);
-    proc_index = 0;
+  // If sig is SIGINT
+  case SIGINT:
+    // call handler for SIGCHLD
+    handle_SIGINT(sig);
     break;
   case SIGHUP:
-    // kill all child processus correclty
-    for (int i = 0; i < proc_index; i++)
-      if (child_pid[i] != 0)
-        kill(child_pid[i], SIGTERM);
-
-    int child_status;
-    // wait for any child process to exit
-    waitpid(-1, &child_status, 0);
-
-    if (WIFEXITED(child_status))
-      printf("Foreground job exited with code %d\n", WEXITSTATUS(child_status));
-    proc_index = 0;
-    exit(0);
+    handle_SIGHUP();
     break;
   }
 }
