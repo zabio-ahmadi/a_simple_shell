@@ -1,7 +1,7 @@
 #include "lib.h"
 #include <errno.h>
 
-#define SIZE 3
+#define SIZE 10
 
 pid_t child_pid[SIZE]; // global array to store process IDs of child processes
 int proc_index = 0;    // global variable to keep track of number of child processes
@@ -244,7 +244,7 @@ void handle_SIGINT(int sig)
 void handle_SIGHUP()
 {
   // kill all child processus correclty
-  for (int i = proc_index; i >= 0; i--)
+  for (int i = proc_index - 1; i >= 0; i--)
     if (child_pid[i] != -1)
       kill(child_pid[i], SIGTERM);
 
