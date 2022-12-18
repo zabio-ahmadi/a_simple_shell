@@ -6,6 +6,7 @@
 pid_t child_pid[SIZE]; // global array to store process IDs of child processes
 int proc_index = 0;    // global variable to keep track of number of child processes
 
+pid_t background_pid = 0;
 // function to copy contents of a file identified by file descriptor fd_from to a new file specified by 'to' argument
 int copy(const int fd_from, const char *to)
 {
@@ -111,6 +112,7 @@ void process_cmd_simple(cmd_t cmd)
   // if the current process is the parent process
   else
   {
+    background_pid = pid;
     int child_status;               // variable to store the exit status of the child process
     waitpid(pid, &child_status, 0); // wait for the child process with process id "pid" to finish and store its exit status in "child_status"
     if (WIFEXITED(child_status))    // if the child process terminated normally
@@ -157,6 +159,7 @@ void process_cmd_fileout(cmd_t cmd)
   }
   else // if the current process is the parent process
   {
+    background_pid = pid;
     int child_status;               // variable to store the exit status of the child process
     waitpid(pid, &child_status, 0); // wait for the child process with process id "pid" to finish and store its exit status in "child_status"
     if (WIFEXITED(child_status))    // if the child process terminated normally
@@ -206,6 +209,7 @@ void process_cmd_pipe(cmd_t cmd)
   // If the current process is the parent process
   else
   {
+    background_pid = pid1;
     // Create another child process
     pid2 = fork();
     // Store the process ID of the second child process in the array
@@ -276,9 +280,16 @@ void process_cmd_background(cmd_t cmd)
   // If the current process is the parent process
   else
   {
-    // Set a signal handler for SIGCHLD
+    background_pid = pid;
     signal(SIGCHLD, signal_handler);
   }
+}
+
+void handle_SIGCHILD()
+{
+  // printf("\n%d",sig);
+  int status;
+  waitpid(-1, &status, WNOHANG);
 }
 
 // handler
@@ -294,7 +305,7 @@ void signal_handler(int sig)
     break;
 
   case SIGCHLD:
-    signal(SIGCHLD, SIG_IGN);
+    handle_SIGCHILD();
     break;
   case SIGINT:
     for (int i = 0; i < proc_index; i++)
@@ -327,20 +338,34 @@ void signal_handler(int sig)
 void exec_shell()
 {
 
-  // struct sigaction sa;
-  // sa.sa_handler = signal_handler;
-  // sigemptyset(&sa.sa_mask);
-  // sigaddset(&sa.sa_mask, SIGHUP);
-  // sa.sa_flags = SA_SIGINFO | SA_RESTART;
-  // sigaction(SIGTERM, &sa, NULL);
-  // sigaction(SIGQUIT, &sa, NULL);
-  // sigaction(SIGINT, &sa, NULL);
-  // sigaction(SIGHUP, &sa, NULL);
+  // Set up the signal handler
+  struct sigaction sa;
+  sa.sa_handler = signal_handler;
+  sigemptyset(&sa.sa_mask);
+  sa.sa_flags = SA_RESTART;
+  if (sigaction(SIGTERM, &sa, NULL) == -1)
+  {
+    perror("sigaction");
+    exit(EXIT_FAILURE);
+  }
 
-  signal(SIGTERM, signal_handler);
-  signal(SIGQUIT, signal_handler);
-  signal(SIGINT, signal_handler);
-  signal(SIGHUP, signal_handler);
+  if (sigaction(SIGQUIT, &sa, NULL) == -1)
+  {
+    perror("sigaction");
+    exit(EXIT_FAILURE);
+  }
+
+  if (sigaction(SIGINT, &sa, NULL) == -1)
+  {
+    perror("sigaction");
+    exit(EXIT_FAILURE);
+  }
+
+  if (sigaction(SIGHUP, &sa, NULL) == -1)
+  {
+    perror("sigaction");
+    exit(EXIT_FAILURE);
+  }
 
   // Declare a variable to store the parsed command
   cmd_t cmd;
