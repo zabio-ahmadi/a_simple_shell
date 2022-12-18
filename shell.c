@@ -5,5 +5,6 @@ int main()
 {
 
     exec_shell();
+    pause();
     exit(EXIT_SUCCESS);
 }
