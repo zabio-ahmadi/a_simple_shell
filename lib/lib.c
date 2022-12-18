@@ -1,7 +1,7 @@
 #include "lib.h"
 #include <errno.h>
 
-#define SIZE 10
+#define SIZE 3
 
 pid_t child_pid[SIZE]; // global array to store process IDs of child processes
 int proc_index = 0;    // global variable to keep track of number of child processes
@@ -308,22 +308,27 @@ void signal_handler(int sig)
   case SIGINT:
     // Send sig to all child processes in child_pid using kill()
     for (int i = 0; i < proc_index; i++)
-      if (child_pid[i] != 0)
+      if (child_pid[i] != -1)
+      {
         kill(child_pid[i], sig);
+        child_pid[i] = -1;
+      }
     // Wait for any child process to exit
-    waitpid(-1, NULL, 0);
+    waitpid(-1, NULL, 1);
     break;
   // If sig is SIGHUP
   case SIGHUP:
     // Send SIGTERM to all child processes in child_pid using kill()
     for (int i = 0; i < proc_index; i++)
-      if (child_pid[i] != 0)
-        kill(child_pid[i], SIGTERM);
-
+      if (child_pid[i] != -1)
+      {
+        kill(child_pid[i], sig);
+        child_pid[i] = -1;
+      }
     // Declare a variable to store the exit status of the child process
     int child_status;
     // Wait for any child process to exit
-    int err = waitpid(-1, &child_status, 0);
+    int err = waitpid(-1, &child_status, 1);
     printf("there is an error : %d\n", err);
     // If the child process terminated normally, print its exit status and exit the program
     if (WIFEXITED(child_status))
@@ -349,6 +354,11 @@ void exec_shell()
   // sigaction(SIGQUIT, &sa, NULL);
   // sigaction(SIGINT, &sa, NULL);
   // sigaction(SIGHUP, &sa, NULL);
+
+  for (size_t i = 0; i < SIZE; i++)
+  {
+    child_pid[i] = -1;
+  }
 
   signal(SIGTERM, signal_handler);
   signal(SIGQUIT, signal_handler);
