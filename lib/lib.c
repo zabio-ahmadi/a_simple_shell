@@ -322,7 +322,7 @@ void signal_handler(int sig)
     for (int i = 0; i < proc_index; i++)
       if (child_pid[i] != -1)
       {
-        kill(child_pid[i], sig);
+        kill(child_pid[i], SIGTERM);
         child_pid[i] = -1;
       }
     // // Declare a variable to store the exit status of the child process
