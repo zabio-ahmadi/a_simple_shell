@@ -298,11 +298,13 @@ void signal_handler(int sig)
     break;
   case SIGINT:
     for (int i = 0; i < proc_index; i++)
+    {
       if (child_pid[i] != 0)
         kill(child_pid[i], sig);
+    }
 
     waitpid(-1, NULL, 0);
-
+    proc_index = 0;
     break;
   case SIGHUP:
     // kill all child processus correclty
@@ -316,9 +318,8 @@ void signal_handler(int sig)
 
     if (WIFEXITED(child_status))
       printf("Foreground job exited with code %d\n", WEXITSTATUS(child_status));
+    proc_index = 0;
     exit(0);
-    break;
-  default:
     break;
   }
 }
